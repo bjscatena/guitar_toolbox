@@ -1,5 +1,9 @@
 # 🧰 Guitar Toolbox
 
+[![Deploy GitHub Pages](https://github.com/bjscatena/guitar_toolbox/actions/workflows/deploy.yml/badge.svg)](https://github.com/bjscatena/guitar_toolbox/actions/workflows/deploy.yml)
+
+**🌐 No ar:** https://bjscatena.github.io/guitar_toolbox/
+
 Uma **caixa de ferramentas** de guitarra que roda 100% no navegador (Client-Side) e fica pronta para hospedagem gratuita no **GitHub Pages**. Nada de curso com trilha nem ordem obrigatória: você abre a ferramenta que resolve o problema da vez, usa e fecha.
 
 ---
@@ -118,6 +122,8 @@ O projeto é 100% estático (HTML/CSS/JS puro, sem build) e usa **caminhos relat
 
 ### 1. Primeiro push
 
+> ✅ Já executado neste repositório. Para trabalhar em outra máquina: `git clone https://github.com/bjscatena/guitar_toolbox.git`.
+
 ```bash
 git init -b main
 git add .
@@ -133,7 +139,7 @@ Em **Settings > Pages > Build and deployment**, escolha a fonte:
 - **GitHub Actions** (recomendado): o workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) publica o site a cada push em `main` (e também via *Run workflow*).
 - **Deploy from a branch**: branch `main`, pasta `/ (root)` — o arquivo `.nojekyll` já está presente.
 
-URL final: `https://<seu-usuario>.github.io/guitar_toolbox/`
+URL final (já publicada): **https://bjscatena.github.io/guitar_toolbox/**
 
 ### 3. Testar localmente (antes do push)
 

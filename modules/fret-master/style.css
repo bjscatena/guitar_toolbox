@@ -1,0 +1,825 @@
+/* ==========================================================================
+   Design System & Theme Variables
+   ========================================================================== */
+:root {
+  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Cores Modernas / Dark Guitar Theme */
+  --bg-main: #0c0f14;
+  --bg-surface: #151a23;
+  --bg-card: #1c2331;
+  --bg-card-hover: #222b3d;
+
+  --accent-gold: #f59e0b;
+  --accent-amber: #d97706;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Braço de Guitarra / Wood Palette */
+  --fretboard-wood-top: #2c1d11;
+  --fretboard-wood-mid: #1f140c;
+  --fretboard-wood-bot: #150d07;
+  --fret-wire: #9ca3af;
+  --fret-wire-highlight: #d1d5db;
+  --nut-color: #f1ebd9;
+  --fret-inlay: #e2e8f0;
+  
+  /* Strings */
+  --string-plain: #cbd5e1;
+  --string-wound: #b45309;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(245, 158, 11, 0.3);
+
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+  --shadow-neon: 0 0 20px rgba(245, 158, 11, 0.25);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+}
+
+/* ==========================================================================
+   Reset & Base Styles
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.04) 0%, transparent 40%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+.app-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem 1.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ==========================================================================
+   Header & Stats Bar
+   ========================================================================== */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-icon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.4));
+  animation: floatIcon 4s ease-in-out infinite alternate;
+}
+
+@keyframes floatIcon {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-3px) rotate(-4deg); }
+}
+
+.brand-text h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ffffff 40%, var(--accent-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-text .subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  transform: translateY(-2px);
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-value.streak {
+  color: var(--accent-gold);
+}
+
+.lives-container {
+  display: flex;
+  gap: 0.2rem;
+  margin-top: 0.1rem;
+}
+
+.heart {
+  font-size: 1rem;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;
+}
+
+.heart.lost {
+  filter: grayscale(1) opacity(0.3);
+  transform: scale(0.8);
+}
+
+/* ==========================================================================
+   Controls & Level Selector
+   ========================================================================== */
+.controls-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.25rem;
+}
+
+.level-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 320px;
+}
+
+.level-selector-wrapper label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+#level-select {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#level-select:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.toggles-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.toggle-group {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: var(--accent-gold);
+  color: #0c0f14;
+  font-weight: 700;
+}
+
+.icon-toggle-btn, .action-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.icon-toggle-btn:hover, .action-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   Target Note Display (Center Stage)
+   ========================================================================== */
+.target-panel {
+  display: flex;
+  justify-content: center;
+}
+
+.target-card {
+  background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(21, 26, 35, 0.8) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 3rem;
+  text-align: center;
+  min-width: 320px;
+  box-shadow: var(--shadow-lg), var(--shadow-neon);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.target-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+}
+
+.target-header {
+  margin-bottom: 0.5rem;
+}
+
+.target-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.12);
+  padding: 0.25rem 0.85rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.target-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.target-note-main {
+  font-family: var(--font-mono);
+  font-size: 4rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.target-note-sub {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.target-progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0 0.8rem 0;
+}
+
+.string-progress-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.string-progress-chip.completed {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: var(--accent-green);
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+.chip-check {
+  font-size: 0.85rem;
+}
+
+.target-feedback {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  min-height: 1.25rem;
+  transition: color 0.2s ease;
+}
+
+.target-feedback.success {
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.target-feedback.error {
+  color: var(--accent-red);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Fretboard Layout & Styling
+   ========================================================================== */
+.fretboard-container-wrapper {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fretboard-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nut-badge {
+  background: var(--nut-color);
+  color: #1a1a1a;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.active-indicator {
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+.fretboard-scroll-area {
+  overflow-x: auto;
+  padding: 0.5rem 0 1rem 0;
+  /* Scrollbar estilizada */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+}
+
+.fretboard-scroll-area::-webkit-scrollbar {
+  height: 8px;
+}
+.fretboard-scroll-area::-webkit-scrollbar-thumb {
+  background: #2d3748;
+  border-radius: 4px;
+}
+
+/* Fretboard Grid Core */
+.fretboard {
+  display: grid;
+  /* 1 coluna para nomes das cordas + 1 coluna para Nut (casa 0) + 12 colunas de trastes */
+  grid-template-columns: 55px 50px repeat(12, minmax(65px, 1fr));
+  min-width: 950px;
+  background: linear-gradient(180deg, var(--fretboard-wood-top) 0%, var(--fretboard-wood-mid) 50%, var(--fretboard-wood-bot) 100%);
+  border-radius: 10px;
+  position: relative;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.8), 0 8px 20px rgba(0,0,0,0.4);
+  border: 2px solid #3d2817;
+  user-select: none;
+}
+
+/* Fret Markers Row (Topo dos trastes com números 0..12) */
+.fret-number-row {
+  display: contents;
+}
+
+.fret-num-cell {
+  padding: 0.4rem 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.fret-num-cell.is-marker {
+  color: var(--accent-gold);
+}
+
+/* Linha de Corda (Fretboard Row) */
+.string-row {
+  display: contents;
+}
+
+/* Rótulo da corda na esquerda (ex: 1 (E), 2 (B)) */
+.string-label-cell {
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  border-right: 2px solid rgba(0,0,0,0.6);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Célula de Traste Interativa */
+.fret-cell {
+  height: 48px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-right: 2px solid var(--fret-wire);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background-color 0.15s ease;
+}
+
+.fret-cell:hover:not(.disabled) {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Nut (Casa 0) */
+.fret-cell.fret-0 {
+  background: rgba(0, 0, 0, 0.35);
+  border-right: 6px solid var(--nut-color);
+  box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+}
+
+/* Corda horizontal atravessando a célula */
+.fret-cell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Variação de espessura de cordas (Corda 1 fina -> Corda 6 grossa) */
+.string-1 .fret-cell::before { height: 1.5px; background: var(--string-plain); opacity: 0.9; }
+.string-2 .fret-cell::before { height: 2.0px; background: var(--string-plain); opacity: 0.9; }
+.string-3 .fret-cell::before { height: 2.6px; background: var(--string-plain); opacity: 0.95; }
+.string-4 .fret-cell::before { height: 3.2px; background: linear-gradient(90deg, #d97706, #b45309); }
+.string-5 .fret-cell::before { height: 4.0px; background: linear-gradient(90deg, #d97706, #b45309); }
+.string-6 .fret-cell::before { height: 5.0px; background: linear-gradient(90deg, #d97706, #b45309); }
+
+/* Cordas Inativas / Desabilitadas */
+.string-row.disabled .string-label-cell {
+  opacity: 0.25;
+  color: var(--text-muted);
+}
+
+.string-row.disabled .fret-cell {
+  opacity: 0.22;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Marcadores de Traste no braço (Inlays nas casas 3, 5, 7, 9, 12) */
+.inlay-dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #f1f5f9 45%, #cbd5e1 90%, #94a3b8 100%);
+  border-radius: 50%;
+  opacity: 0.92;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.9), inset 0 -1px 3px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+/* Posição exata dos marcadores no centro da escala */
+.inlay-single {
+  bottom: -9px; /* Exatamente na divisão entre as cordas 3 e 4 */
+}
+
+/* Marcador duplo na casa 12 */
+.inlay-double-top {
+  bottom: -9px; /* Exatamente entre as cordas 2 e 3 */
+}
+.inlay-double-bot {
+  bottom: -9px; /* Exatamente entre as cordas 4 e 5 */
+}
+
+/* Botão ou Marcador de Nota Pressionada/Revelada */
+.note-marker {
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #ffffff;
+  transform: scale(0);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Estado de Sucesso / Acerto */
+.fret-cell.correct-hit {
+  background-color: rgba(16, 185, 129, 0.25);
+}
+
+.fret-cell.correct-hit .note-marker {
+  transform: scale(1);
+  background: var(--accent-green);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.8);
+}
+
+/* Nota já encontrada na rodada (continua visível até completar todas as cordas) */
+.fret-cell.found-persisted {
+  background-color: rgba(16, 185, 129, 0.18);
+}
+
+.fret-cell.found-persisted .note-marker {
+  transform: scale(1);
+  background: var(--accent-green);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+/* Estado de Erro */
+.fret-cell.wrong-hit {
+  background-color: rgba(239, 68, 68, 0.35);
+  animation: shake 0.3s ease;
+}
+
+.fret-cell.wrong-hit .note-marker {
+  transform: scale(1);
+  background: var(--accent-red);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.8);
+}
+
+/* Revelação da Nota Correta quando o usuário erra */
+.fret-cell.reveal-target .note-marker {
+  transform: scale(1);
+  background: var(--accent-gold);
+  color: #1a1a1a;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.9);
+  animation: pulseGold 1s infinite alternate;
+}
+
+@keyframes pulseGold {
+  0% { transform: scale(0.95); }
+  100% { transform: scale(1.1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ==========================================================================
+   Modal de Fim de Jogo
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 2rem;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(0);
+  transition: transform 0.25s ease;
+}
+
+.modal-overlay.hidden .modal-card {
+  transform: translateY(20px);
+}
+
+.modal-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.modal-card h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.modal-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.modal-stat-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 0.85rem 0.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.mstat-num {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.mstat-lbl {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-amber));
+  color: #121824;
+  border: none;
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 0.85rem 2rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 1rem 0.75rem;
+    gap: 1rem;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .stats-bar {
+    justify-content: space-between;
+  }
+
+  .stat-card {
+    min-width: 65px;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .target-card {
+    padding: 1.25rem 1.5rem;
+    width: 100%;
+  }
+
+  .target-note-main {
+    font-size: 3.2rem;
+  }
+
+  .fretboard-container-wrapper {
+    padding: 0.85rem 0.5rem;
+  }
+}

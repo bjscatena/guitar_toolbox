@@ -1,0 +1,33 @@
+{
+  "name": "Guitar Toolbox",
+  "short_name": "Guitar Toolbox",
+  "description": "Caixa de ferramentas para praticar guitarra no navegador: notas no braço, leitura de partitura, loops e acordes.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c0f14",
+  "theme_color": "#0c0f14",
+  "categories": ["music", "education", "productivity"],
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ]
+}

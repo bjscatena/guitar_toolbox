@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guitar Toolbox | Caixa de Ferramentas para Praticar Guitarra</title>
+  <meta name="description" content="Guitar Toolbox: caixa de ferramentas para praticar guitarra no navegador. Localize notas no braço (FretMaster), leia partitura (SightReader), isole trechos em loop (LoopStudio) e monte acordes no braço (Violão Virtual).">
+
+  <!-- Identidade, ícones e PWA -->
+  <meta name="author" content="Guitar Toolbox">
+  <meta name="theme-color" content="#0c0f14">
+  <meta name="color-scheme" content="dark">
+  <link rel="canonical" href="https://bjscatena.github.io/guitar_toolbox/">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/icons/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+
+  <!-- Open Graph / Twitter (compartilhamento em redes sociais) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Guitar Toolbox">
+  <meta property="og:title" content="Guitar Toolbox | Caixa de Ferramentas para Praticar Guitarra">
+  <meta property="og:description" content="Localize notas no braço (FretMaster), leia partitura (SightReader), isole trechos em loop (LoopStudio) e monte acordes no braço (Violão Virtual).">
+  <meta property="og:url" content="https://bjscatena.github.io/guitar_toolbox/">
+  <meta property="og:image" content="https://bjscatena.github.io/guitar_toolbox/assets/icons/icon-512.png">
+  <meta property="og:image:alt" content="Braço de guitarra estilizado com marcadores nas casas">
+  <meta property="og:locale" content="pt_BR">
+  <meta name="twitter:card" content="summary">
+
+  <!-- Fontes Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Bibliotecas Externas das Ferramentas (VexFlow e Tone.js) - versões fixadas com SRI -->
+  <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"
+          integrity="sha384-NOpv0+9OuhqtqeXLSoULPF4d3UCwlWkmcHkJklpAosC7LpqYvhFCFqqu9QElzbjS"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"
+          integrity="sha384-c6Uo4N9c3SOEigMVzP6IshUG1wQ5uMp3xeoQFiHWAQ86joWdgyajkvopySyKy/Z6"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- CSS Global / Hub e Ferramentas -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="modules/sight-reader/style.css">
+</head>
+<body>
+  <noscript>
+    <p style="margin:0;padding:16px;background:#7f1d1d;color:#fff;text-align:center;font-family:system-ui,sans-serif;">
+      A Guitar Toolbox precisa de JavaScript habilitado no navegador para funcionar.
+    </p>
+  </noscript>
+
+  <!-- ========================================================
+       TOP GLOBAL NAVIGATION BAR
+       ======================================================== -->
+  <header class="hub-navbar">
+    <div class="hub-navbar-left">
+      <button class="hub-home-btn" id="btn-nav-home" title="Todas as ferramentas">
+        <span class="hub-logo-icon">🎸</span>
+        <span class="hub-logo-title">Guitar Toolbox <span class="hub-badge">TOOLBOX</span></span>
+      </button>
+
+      <!-- Indicador / Breadcrumb da Ferramenta Atual -->
+      <div class="current-tool-breadcrumb" id="current-tool-breadcrumb" style="display: none;">
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-title" id="breadcrumb-title">Ferramenta</span>
+      </div>
+    </div>
+
+    <!-- Navegação rápida entre Ferramentas -->
+    <nav class="hub-nav-links">
+      <button class="nav-tab active" data-tool="hub" id="tab-hub">
+        🧰 Ferramentas
+      </button>
+      <button class="nav-tab" data-tool="fretboard" id="tab-fretboard">
+        🎯 FretMaster
+      </button>
+      <button class="nav-tab" data-tool="reading" id="tab-reading">
+        🎼 SightReader
+      </button>
+      <button class="nav-tab" data-tool="practice" id="tab-practice">
+        🔁 LoopStudio
+      </button>
+      <button class="nav-tab" data-tool="chords" id="tab-chords">
+        🎸 Violão Virtual
+      </button>
+    </nav>
+  </header>
+
+  <!-- ========================================================
+       HUB / SELEÇÃO DE FERRAMENTAS (HOME)
+       ======================================================== -->
+  <main class="hub-view" id="view-hub">
+    <div class="hub-hero">
+      <h1 class="hero-title">Sua caixa de ferramentas de guitarra</h1>
+      <p class="hero-subtitle">
+        Quatro ferramentas para praticar no navegador. Abra a que precisar.
+      </p>
+    </div>
+
+    <div class="tools-grid">
+      <!-- Ferramenta 01: FretMaster -->
+      <article class="tool-card card-fretboard" id="card-fretboard-select">
+        <div class="card-header">
+          <div class="card-icon">🎯</div>
+          <span class="card-badge">Ferramenta 01</span>
+        </div>
+        <h2 class="card-title">FretMaster</h2>
+        <span class="card-tagline">Notas no braço</span>
+        <p class="card-desc">Sorteia uma nota e você acha a casa certa no braço.</p>
+        <details class="card-more">
+          <summary>Detalhes</summary>
+          <ul class="card-features">
+            <li>10 níveis de dificuldade (cordas isoladas até o braço todo)</li>
+            <li>Desafio multi-cordas: localize a nota em todas as cordas ativas</li>
+            <li>Alternância instantânea entre Cifras e Dó-Ré-Mi</li>
+            <li>Marcadores perolados realistas e sintetizador de palhetada</li>
+          </ul>
+        </details>
+        <button class="btn-card-action" data-target="fretboard">Abrir →</button>
+      </article>
+
+      <!-- Ferramenta 02: SightReader -->
+      <article class="tool-card card-reading" id="card-reading-select">
+        <div class="card-header">
+          <div class="card-icon">🎼</div>
+          <span class="card-badge">Ferramenta 02</span>
+        </div>
+        <h2 class="card-title">SightReader</h2>
+        <span class="card-tagline">Partitura ⇄ braço</span>
+        <p class="card-desc">Leia a nota na pauta e toque na corda e casa certas.</p>
+        <details class="card-more">
+          <summary>Detalhes</summary>
+          <ul class="card-features">
+            <li>Frases dinâmicas de 4, 8, 12 e 16 notas</li>
+            <li>Partitura renderizada em tempo real via VexFlow</li>
+            <li>Da 1ª posição (cordas isoladas) até expansões com acidentes (#)</li>
+            <li>Síntese polifônica via Tone.js e acompanhamento auditivo</li>
+          </ul>
+        </details>
+        <button class="btn-card-action" data-target="reading">Abrir →</button>
+      </article>
+
+      <!-- Ferramenta 03: LoopStudio -->
+      <article class="tool-card card-practice" id="card-practice-select">
+        <div class="card-header">
+          <div class="card-icon">🔁</div>
+          <span class="card-badge">Ferramenta 03</span>
+        </div>
+        <h2 class="card-title">LoopStudio</h2>
+        <span class="card-tagline">Loop e velocidade</span>
+        <p class="card-desc">Marque o trecho que trava, repita em loop e ajuste a velocidade.</p>
+        <details class="card-more">
+          <summary>Detalhes</summary>
+          <ul class="card-features">
+            <li>Loops precisos com waveform e atalhos rápidos (<kbd>S</kbd> e <kbd>E</kbd>)</li>
+            <li>Controle fino de velocidade (Time-stretch de alta qualidade)</li>
+            <li>Contagem regressiva de preparação e pausas entre repetições</li>
+            <li>Gerenciador de repertório e suporte a faixas locais (MP3, WAV)</li>
+          </ul>
+        </details>
+        <button class="btn-card-action btn-card-practice" data-target="practice">Abrir →</button>
+      </article>
+
+      <!-- Ferramenta 04: Violão Virtual -->
+      <article class="tool-card card-chords" id="card-chords-select">
+        <div class="card-header">
+          <div class="card-icon">🎸</div>
+          <span class="card-badge">Ferramenta 04</span>
+        </div>
+        <h2 class="card-title">Violão Virtual</h2>
+        <span class="card-tagline">Acordes e voicings</span>
+        <p class="card-desc">Monte o acorde no braço e ouça as seis cordas juntas.</p>
+        <details class="card-more">
+          <summary>Detalhes</summary>
+          <ul class="card-features">
+            <li>Braço interativo com 6 cordas × 12 trastes (0 = solta, X = abafada)</li>
+            <li>Botão "Tocar Acorde" com disparo 100% simultâneo (sem arpejo)</li>
+            <li>Dicionário de acordes prontos (maiores, menores, 7ª, sus e power)</li>
+            <li>Detecção automática do nome do acorde e som via Web Audio API</li>
+          </ul>
+        </details>
+        <button class="btn-card-action btn-card-chords" data-target="chords">Abrir →</button>
+      </article>
+
+    </div>
+  </main>
+
+  <!-- ========================================================
+       FERRAMENTA: FRETMASTER
+       ======================================================== -->
+  <section class="tool-view hidden" id="view-fretboard">
+    <div class="tool-top-bar">
+      <div class="tool-info-pill">
+        <span class="tool-icon">🎯</span>
+        <strong>FretMaster &bull; Memorizador do Braço</strong>
+      </div>
+      <button class="btn-back-hub" data-target="hub">← Todas as ferramentas</button>
+    </div>
+
+    <div class="app-container" id="fretboard-tool-content">
+      <!-- Header do FretMaster -->
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-icon">🎯</span>
+          <div class="brand-text">
+            <h2>FretMaster</h2>
+            <p class="subtitle">Domínio total das notas no braço da guitarra</p>
+          </div>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-card" id="stat-score-card">
+            <span class="stat-label">PONTOS</span>
+            <span class="stat-value" id="score-val">0</span>
+          </div>
+          <div class="stat-card" id="stat-streak-card">
+            <span class="stat-label">COMBO</span>
+            <span class="stat-value streak" id="streak-val">0🔥</span>
+          </div>
+          <div class="stat-card" id="stat-accuracy-card">
+            <span class="stat-label">PRECISÃO</span>
+            <span class="stat-value" id="accuracy-val">100%</span>
+          </div>
+          <div class="stat-card" id="stat-lives-card">
+            <span class="stat-label">VIDAS</span>
+            <div class="lives-container" id="lives-val">
+              <span class="heart active">❤️</span>
+              <span class="heart active">❤️</span>
+              <span class="heart active">❤️</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Barra de Configurações e Controles -->
+      <section class="controls-section">
+        <div class="level-selector-wrapper">
+          <label for="level-select">Nível / Desafio:</label>
+          <select id="level-select">
+            <option value="1">Nível 1: Corda 6 (Mizão / E)</option>
+            <option value="2">Nível 2: Corda 5 (Lá / A)</option>
+            <option value="3">Nível 3: Corda 4 (Ré / D)</option>
+            <option value="4">Nível 4: Corda 3 (Sol / G)</option>
+            <option value="5">Nível 5: Corda 2 (Si / B)</option>
+            <option value="6">Nível 6: Corda 1 (Mizinha / E)</option>
+            <option value="7">Nível 7: Cordas 6 e 5 (E, A)</option>
+            <option value="8">Nível 8: Cordas 6, 5 e 4 (Graves)</option>
+            <option value="9">Nível 9: Cordas 3, 2 e 1 (Agudas)</option>
+            <option value="10" selected>Nível 10: Master (Todas as 6 Cordas)</option>
+          </select>
+        </div>
+
+        <div class="toggles-wrapper">
+          <div class="toggle-group" id="notation-toggle-group">
+            <button type="button" class="toggle-btn active" id="btn-notation-cifra" title="Notação Anglo-saxônica (C, D, E...)">Cifra</button>
+            <button type="button" class="toggle-btn" id="btn-notation-solfejo" title="Notação Latina (Dó, Ré, Mi...)">Dó-Ré-Mi</button>
+          </div>
+
+          <button type="button" class="icon-toggle-btn active" id="btn-sound-toggle" title="Som de Notas e Efeitos">
+            <span id="sound-icon">🔊</span>
+          </button>
+
+          <button type="button" class="action-btn" id="btn-reset-game" title="Reiniciar Pontuação">
+            ↺ Reiniciar
+          </button>
+        </div>
+      </section>
+
+      <!-- Painel de Ação Central -->
+      <main class="target-panel">
+        <div class="target-card" id="target-card">
+          <div class="target-header">
+            <span class="target-badge" id="target-instruction">ENCONTRE A NOTA</span>
+          </div>
+          <div class="target-display">
+            <div class="target-note-main" id="target-note-main">C</div>
+            <div class="target-note-sub" id="target-note-sub">Dó</div>
+          </div>
+          <div class="target-progress-bar" id="target-progress-container"></div>
+          <div class="target-feedback" id="feedback-banner">
+            Clique no traste correspondente nas cordas ativas
+          </div>
+        </div>
+      </main>
+
+      <!-- Braço da Guitarra -->
+      <section class="fretboard-container-wrapper">
+        <div class="fretboard-header-info">
+          <span class="fret-legend-item"><span class="badge nut-badge">0</span> Corda Solta (Nut)</span>
+          <span class="fret-legend-item">Casas 1 a 12</span>
+          <span class="fret-legend-item active-indicator" id="active-strings-indicator">Cordas ativas: Todas (1-6)</span>
+        </div>
+
+        <div class="fretboard-scroll-area">
+          <div class="fretboard" id="fretboard"></div>
+        </div>
+      </section>
+
+      <!-- Modal de Game Over -->
+      <div class="modal-overlay hidden" id="game-over-modal">
+        <div class="modal-card">
+          <div class="modal-icon">🎸⚡</div>
+          <h2 id="modal-title">Fim de Jogo!</h2>
+          <p id="modal-desc">Você perdeu todas as vidas neste nível.</p>
+          
+          <div class="modal-stats">
+            <div class="modal-stat-box">
+              <span class="mstat-num" id="modal-score">0</span>
+              <span class="mstat-lbl">Pontos</span>
+            </div>
+            <div class="modal-stat-box">
+              <span class="mstat-num" id="modal-streak">0</span>
+              <span class="mstat-lbl">Melhor Combo</span>
+            </div>
+            <div class="modal-stat-box">
+              <span class="mstat-num" id="modal-accuracy">0%</span>
+              <span class="mstat-lbl">Precisão</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-primary" id="btn-modal-restart">Tentar Novamente</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       FERRAMENTA: SIGHTREADER
+       ======================================================== -->
+  <section class="tool-view hidden" id="view-reading">
+    <div class="tool-top-bar">
+      <div class="tool-info-pill">
+        <span class="tool-icon">🎼</span>
+        <strong>SightReader &bull; Leitura de Partitura & Pauta</strong>
+      </div>
+      <button class="btn-back-hub" data-target="hub">← Todas as ferramentas</button>
+    </div>
+
+    <div class="reading-tool-wrapper">
+      <!-- Header do SightReader -->
+      <header class="reading-header">
+        <div class="reading-header-left">
+          <h2 class="reading-title">SightReader</h2>
+          <span class="reading-subtitle">Partitura ⇄ braço: 17 progressões de dificuldade</span>
+        </div>
+
+        <div class="reading-header-controls">
+          <div class="reading-control-group">
+            <label for="sr-level-select">Progressão / Nível:</label>
+            <select id="sr-level-select" class="styled-select">
+              <optgroup label="1ª Posição - Notas Naturais">
+                <option value="corda_1_intro" selected>1. 1ª Corda (Intro) [E, F, G]</option>
+                <option value="corda_2_intro">2. 2ª Corda (Intro) [B, C, D]</option>
+                <option value="cordas_1_2">3. Cordas 1 e 2 Combinadas</option>
+                <option value="corda_3_intro">4. 3ª Corda (Intro) [G, A]</option>
+                <option value="cordas_1_3">5. Cordas 1 a 3 Combinadas</option>
+                <option value="corda_4_intro">6. 4ª Corda (Intro) [D, E, F]</option>
+                <option value="cordas_1_4">7. Cordas 1 a 4 Combinadas</option>
+                <option value="corda_5_intro">8. 5ª Corda (Intro) [A, B, C]</option>
+                <option value="cordas_1_5">9. Cordas 1 a 5 Combinadas</option>
+                <option value="corda_6_intro">10. 6ª Corda (Intro) [E, F, G]</option>
+                <option value="revisao_pos1_todas">11. Todas as Cordas (Casas 0-3 Naturais)</option>
+              </optgroup>
+              <optgroup label="1ª Posição - Acidentes (Sustenidos #)">
+                <option value="acidentes_cordas_1_2">12. Acidentes: Cordas 1 e 2 [F#, G#, C#, D#]</option>
+                <option value="acidentes_cordas_3_4">13. Acidentes: Cordas 3 e 4 [G#, A#, D#, F#]</option>
+                <option value="acidentes_cordas_5_6">14. Acidentes: Cordas 5 e 6 [A#, C#, F#, G#]</option>
+                <option value="pos1_completa_com_acidentes">15. 1ª Posição Completa (Naturais + Acidentes)</option>
+              </optgroup>
+              <optgroup label="Expansão do Braço">
+                <option value="expansao_casa_5">16. Casas 0 a 5 (Todas as Cordas)</option>
+                <option value="braco_completo_12">17. Braço Completo (Casas 0 a 12)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="reading-control-group">
+            <label for="sr-sequence-length-select">Notas por Frase:</label>
+            <select id="sr-sequence-length-select" class="styled-select">
+              <option value="4">4 Notas (1 Compasso)</option>
+              <option value="8">8 Notas (2 Compassos)</option>
+              <option value="12">12 Notas (3 Compassos)</option>
+              <option value="16" selected>16 Notas (Frase Completa) - Padrão</option>
+            </select>
+          </div>
+
+          <div class="reading-stats-box">
+            <div class="stat-box-item">
+              <span class="stat-box-lbl">Acertos</span>
+              <span class="stat-box-val" id="sr-score-counter">0</span>
+            </div>
+            <div class="stat-box-item">
+              <span class="stat-box-lbl">Sequência</span>
+              <span class="stat-box-val streak" id="sr-streak-counter">0🔥</span>
+            </div>
+            <button id="sr-sound-toggle-btn" class="icon-toggle active" title="Alternar Som">
+              <span id="sr-sound-icon">🔊</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Instruções e Sequência de Bolinhas -->
+      <section class="prompt-panel" id="sr-prompt-panel">
+        <div class="prompt-main-info">
+          <div class="prompt-text" id="sr-prompt-instruction">
+            Identifique a nota na partitura e toque na corda e casa corretas:
+          </div>
+          <div class="sequence-tracker">
+            <span class="seq-label">Progresso do Exercício:</span>
+            <div class="seq-dots" id="sr-seq-dots"></div>
+          </div>
+        </div>
+        <div class="feedback-badge" id="sr-feedback-badge">Aguardando início...</div>
+      </section>
+
+      <!-- Área da Partitura com VexFlow -->
+      <section class="sheet-container glass-card">
+        <div class="sheet-header">
+          <span class="sheet-title">Pauta Musical (Clave de Sol)</span>
+        </div>
+        <div id="vexflow-output" class="vexflow-canvas-wrapper"></div>
+      </section>
+
+      <!-- Braço da Guitarra do SightReader -->
+      <section class="fretboard-section glass-card">
+        <div class="fretboard-toolbar">
+          <div class="fretboard-legend">
+            <span>Cordas: 1 (Mi agudo) até 6 (Mi grave)</span>
+            <span class="fret-hint">💡 Casas 3, 5, 7, 9 e 12 com marcadores</span>
+          </div>
+          <button type="button" class="btn-subtle" id="sr-btn-next-question">
+            Pular / Nova Sequência →
+          </button>
+        </div>
+
+        <div class="fretboard-wrapper">
+          <div class="string-labels" id="sr-string-labels">
+            <div>1ª (E)</div>
+            <div>2ª (B)</div>
+            <div>3ª (G)</div>
+            <div>4ª (D)</div>
+            <div>5ª (A)</div>
+            <div>6ª (E)</div>
+          </div>
+
+          <div class="fretboard-grid" id="sr-fretboard-grid"></div>
+        </div>
+
+        <div class="fret-numbers" id="sr-fret-numbers"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       FERRAMENTA: LOOPSTUDIO
+       ======================================================== -->
+  <section class="tool-view hidden" id="view-practice">
+    <div class="tool-top-bar">
+      <div class="tool-info-pill">
+        <span class="tool-icon">🔁</span>
+        <strong>LoopStudio &bull; Laboratório de Riffs, Solos & Repetições</strong>
+      </div>
+      <button class="btn-back-hub" data-target="hub">← Todas as ferramentas</button>
+    </div>
+
+    <div class="practice-tool-wrapper">
+      <iframe id="practice-iframe" src="modules/loop-studio/index.html" title="Guitar Toolbox - LoopStudio"
+              loading="lazy" referrerpolicy="no-referrer"></iframe>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       FERRAMENTA: VIOLÃO VIRTUAL
+       ======================================================== -->
+  <section class="tool-view hidden" id="view-chords">
+    <div class="tool-top-bar">
+      <div class="tool-info-pill">
+        <span class="tool-icon">🎸</span>
+        <strong>Violão Virtual &bull; Tocador de Acordes &amp; Voicings</strong>
+      </div>
+      <button class="btn-back-hub" data-target="hub">← Todas as ferramentas</button>
+    </div>
+
+    <div class="chord-tool-wrapper">
+      <iframe id="chords-iframe" src="modules/virtual-guitar/index.html" title="Guitar Toolbox - Violão Virtual"
+              loading="lazy" referrerpolicy="no-referrer"></iframe>
+    </div>
+  </section>
+
+  <!-- Scripts das Ferramentas e do Hub -->
+  <script src="modules/fret-master/script.js"></script>
+  <script src="modules/sight-reader/script.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

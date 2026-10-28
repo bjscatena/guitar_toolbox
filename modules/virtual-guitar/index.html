@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violão Virtual | Guitar Toolbox</title>
+  <meta name="description" content="Violão Virtual da Guitar Toolbox: monte acordes no braço de 6 cordas e 12 trastes e toque todas as cordas simultaneamente com síntese de cordas via Web Audio API.">
+
+  <!-- Fontes (mesmo padrão visual da Guitar Toolbox) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+/* ==========================================================================
+   Violão Virtual — Ferramenta da Guitar Toolbox
+   Aplicação autossuficiente (HTML + CSS + JavaScript em um único arquivo)
+   ========================================================================== */
+:root {
+  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --bg-main: #0c0f14;
+  --bg-surface: #151a23;
+  --bg-card: #1c2331;
+  --bg-card-hover: #222b3d;
+
+  --accent-gold: #f59e0b;
+  --accent-amber: #d97706;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Paleta de madeira do braço */
+  --fretboard-wood-top: #2c1d11;
+  --fretboard-wood-mid: #1f140c;
+  --fretboard-wood-bot: #150d07;
+  --fret-wire: #9ca3af;
+  --nut-color: #f1ebd9;
+
+  --string-plain: #cbd5e1;
+  --string-wound: #b45309;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 1rem 1.25rem 2.5rem 1.25rem;
+  background-image:
+    radial-gradient(circle at 12% 10%, rgba(245, 158, 11, 0.06) 0%, transparent 42%),
+    radial-gradient(circle at 88% 90%, rgba(6, 182, 212, 0.05) 0%, transparent 45%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+.app-shell {
+  max-width: 1560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ==========================================================================
+   Cabeçalho
+   ========================================================================== */
+.top-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-icon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.4));
+  animation: floatIcon 4s ease-in-out infinite alternate;
+}
+
+@keyframes floatIcon {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-3px) rotate(-4deg); }
+}
+
+.brand h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand .subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.header-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.ctl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.styled-select {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  max-width: 260px;
+}
+
+.styled-select:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 118px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--accent-cyan), rgba(255, 255, 255, 0.12));
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--accent-cyan);
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+}
+
+.icon-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.icon-toggle.active {
+  border-color: rgba(6, 182, 212, 0.5);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+}
+
+/* ==========================================================================
+   Layout de trabalho
+   ========================================================================== */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(230px, 285px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.board-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.panel-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.hint {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Painel de Acordes Rápidos (dicionário de voicings)
+   ========================================================================== */
+.presets-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chord-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 0.4rem;
+}
+
+.chord-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.55rem 0.25rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.chord-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(6, 182, 212, 0.45);
+  transform: translateY(-2px);
+}
+
+.chord-btn.active {
+  background: rgba(6, 182, 212, 0.16);
+  border-color: var(--accent-cyan);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+}
+
+/* ==========================================================================
+   Braço do Violão
+   ========================================================================== */
+.fretboard-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.fretboard-legend b {
+  font-family: var(--font-mono);
+  color: var(--accent-cyan);
+}
+
+.fretboard-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.35rem;
+  border-radius: var(--radius-md);
+}
+
+.fretboard {
+  min-width: 830px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--fretboard-wood-top) 0%, var(--fretboard-wood-mid) 55%, var(--fretboard-wood-bot) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.fret-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.fret-row.is-header {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.string-label-cell {
+  flex: 0 0 82px;
+  width: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  background: rgba(12, 15, 20, 0.85);
+  border-right: 1px solid var(--border-subtle);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  padding: 0.15rem 0.2rem;
+}
+
+.string-label-cell .s-label {
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.string-label-cell .s-note {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--accent-gold);
+}
+
+/* Células (cabeçalho de casas + colunas) */
+.fret-cell {
+  flex: 1 1 0;
+  min-width: 54px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(156, 163, 175, 0.45);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.fret-row.is-header .fret-cell {
+  height: 30px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.fret-row.is-header .fret-cell.is-marker {
+  color: var(--accent-gold);
+}
+
+.fret-cell.col-mute {
+  background: rgba(239, 68, 68, 0.06);
+  border-right: 1px dashed rgba(239, 68, 68, 0.35);
+}
+
+.fret-cell.col-open {
+  background: rgba(6, 182, 212, 0.07);
+  border-right: 6px solid var(--nut-color);
+}
+
+.fret-cell.is-last {
+  border-right: none;
+}
+
+/* Corda desenhada atravessando cada célula */
+.fret-row .fret-cell::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--string-plain) 0%, #94a3b8 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.fret-row .fret-cell.wound::after {
+  background: linear-gradient(180deg, #d97706 0%, var(--string-wound) 100%);
+}
+
+/* Espessuras proporcionais: 1ª corda fina -> 6ª corda grossa */
+.fret-row.string-1 .fret-cell::after { height: 1px; }
+.fret-row.string-2 .fret-cell::after { height: 1.5px; }
+.fret-row.string-3 .fret-cell::after { height: 2px; }
+.fret-row.string-4 .fret-cell::after { height: 2.6px; }
+.fret-row.string-5 .fret-cell::after { height: 3.2px; }
+.fret-row.string-6 .fret-cell::after { height: 4px; }
+
+/* Marcadores perolados do braço */
+.inlay-dot {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #cbd5e1 60%, #94a3b8 100%);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.inlay-dot.inlay-center { top: 50%; }
+.inlay-dot.inlay-top { top: 28%; }
+.inlay-dot.inlay-bottom { top: 72%; }
+
+/* Célula clicável (escolha da casa) */
+.fret-option {
+  height: 46px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fret-option:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.fret-option .fret-note {
+  position: relative;
+  z-index: 2;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.05rem 0.3rem;
+  border-radius: var(--radius-sm);
+  background: rgba(12, 15, 20, 0.85);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.fret-option:hover .fret-note {
+  opacity: 1;
+}
+
+.fret-option.selected {
+  background: rgba(245, 158, 11, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.5);
+}
+
+.fret-option.selected .fret-note {
+  opacity: 1;
+  color: var(--accent-gold);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+}
+
+.fret-option.selected.is-open {
+  background: rgba(6, 182, 212, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.55);
+}
+
+.fret-option.selected.is-open .fret-note {
+  color: var(--accent-cyan);
+  border-color: rgba(6, 182, 212, 0.5);
+}
+
+.fret-option.selected.is-mute {
+  background: rgba(239, 68, 68, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.5);
+}
+
+.fret-option.selected.is-mute .fret-note {
+  color: var(--accent-red);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.fret-option.ringing {
+  animation: stringRing 0.55s ease-out;
+}
+
+@keyframes stringRing {
+  0% { background: rgba(245, 158, 11, 0.5); }
+  100% { background: rgba(245, 158, 11, 0); }
+}
+
+.fretboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.btn-ghost {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   Painel de Execução
+   ========================================================================== */
+.play-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chord-info {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1rem;
+  min-height: 92px;
+  justify-content: center;
+}
+
+.chord-info-label {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.chord-name {
+  font-family: var(--font-mono);
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--accent-gold);
+  text-shadow: 0 4px 18px rgba(245, 158, 11, 0.25);
+}
+
+.chord-detail {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.btn-play {
+  flex: 0 0 auto;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.95rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-amber));
+  color: #0c0f14;
+  font-family: var(--font-main);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35);
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-play:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+.btn-play:active {
+  transform: translateY(1px) scale(0.995);
+}
+
+.btn-play.flash {
+  animation: playFlash 0.4s ease-out;
+}
+
+@keyframes playFlash {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+  100% { box-shadow: 0 0 0 18px rgba(245, 158, 11, 0); }
+}
+
+.btn-play-icon { font-size: 1.4rem; }
+.btn-play-text { font-size: 1.12rem; font-weight: 900; letter-spacing: 0.3px; }
+.btn-play-hint { font-size: 0.68rem; font-weight: 700; opacity: 0.75; }
+
+.notes-area {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.note-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 46px;
+}
+
+.note-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  min-width: 48px;
+  padding: 0.3rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.note-chip .chip-string {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.note-chip .chip-note {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.note-chip .chip-solfejo {
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+}
+
+.note-chip.is-muted {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.note-chip.is-muted .chip-note { color: var(--accent-red); }
+
+.note-chip.is-ringing {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+}
+
+.notation-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  width: fit-content;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.toggle-btn.active {
+  background: var(--accent-cyan);
+  color: #04121a;
+}
+
+.status-line {
+  margin-top: 0.9rem;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  min-height: 1.1rem;
+}
+
+.status-line.success { color: var(--accent-green); font-weight: 600; }
+.status-line.warning { color: var(--accent-red); font-weight: 600; }
+
+/* ==========================================================================
+   Responsivo
+   ========================================================================== */
+@media (max-width: 1000px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .chord-grid {
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .btn-play { width: 100%; }
+  .styled-select { max-width: 100%; }
+  .brand h1 { font-size: 1.2rem; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- =========================================================
+         CABEÇALHO: identidade + controles globais
+         ========================================================= -->
+    <header class="top-header">
+      <div class="brand">
+        <span class="brand-icon">🎸</span>
+        <div>
+          <h1>Violão Virtual</h1>
+          <p class="subtitle">Monte o acorde no braço e toque todas as cordas ao mesmo tempo · Guitar Toolbox</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <label class="ctl">
+          <span>Afinação</span>
+          <select id="tuning-select" class="styled-select" aria-label="Afinação do violão"></select>
+        </label>
+
+        <label class="ctl">
+          <span>Sustain</span>
+          <input type="range" id="sustain-range" min="60" max="170" step="5" value="100" aria-label="Duração do som (sustain)">
+        </label>
+
+        <label class="ctl">
+          <span>Volume</span>
+          <input type="range" id="volume-range" min="0" max="100" step="1" value="80" aria-label="Volume geral">
+        </label>
+
+        <button type="button" class="icon-toggle active" id="sound-toggle" title="Ligar / desligar o som">🔊</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <!-- =========================================================
+           PAINEL ESQUERDO: dicionário de acordes prontos
+           ========================================================= -->
+      <aside class="panel presets-panel">
+        <h2 class="panel-title">🎼 Acordes Rápidos</h2>
+        <p class="hint">Escolha um desenho pronto para carregar no braço. Ao clicar, o acorde é montado e tocado de uma vez.</p>
+
+        <select id="chord-category" class="styled-select" aria-label="Categoria de acordes"></select>
+        <div class="chord-grid" id="chord-grid"></div>
+
+        <p class="hint" id="tuning-note">
+          Desenhos de acorde consideram a afinação padrão (Mi Lá Ré Sol Si Mi).
+        </p>
+      </aside>
+
+      <div class="board-column">
+        <!-- =========================================================
+             BRAÇO DO VIOLÃO (6 cordas × 12 trastes)
+             ========================================================= -->
+        <section class="panel fretboard-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">🎯 Braço do Violão · casas 0 a 12</h2>
+            <div class="fretboard-legend">
+              <span><b>X</b> corda abafada</span>
+              <span><b>0</b> corda solta</span>
+              <span>Clique em uma casa para selecionar · Passe o mouse para ver a nota</span>
+            </div>
+          </div>
+
+          <div class="fretboard-scroll">
+            <div class="fretboard" id="fretboard"></div>
+          </div>
+
+          <div class="fretboard-actions">
+            <button type="button" class="btn-ghost" id="btn-clear">🧹 Limpar (todas soltas)</button>
+            <button type="button" class="btn-ghost" id="btn-mute-all">🔇 Abafar todas (X)</button>
+            <button type="button" class="btn-ghost" id="btn-stop">🛑 Parar o som</button>
+          </div>
+        </section>
+
+        <!-- =========================================================
+             PAINEL DE EXECUÇÃO: nome do acorde + botão principal
+             ========================================================= -->
+        <section class="panel play-panel">
+          <div class="chord-info">
+            <span class="chord-info-label">Acorde no braço</span>
+            <span class="chord-name" id="chord-name">—</span>
+            <span class="chord-detail" id="chord-detail">Nenhuma corda selecionada</span>
+          </div>
+
+          <button type="button" class="btn-play" id="btn-play" title="Todas as cordas soam no mesmo instante (atalho: barra de espaço)">
+            <span class="btn-play-icon">🎸</span>
+            <span class="btn-play-text">Tocar Acorde</span>
+            <span class="btn-play-hint">6 cordas no mesmo instante · sem arpejo · [espaço]</span>
+          </button>
+
+          <div class="notes-area">
+            <div class="notation-toggle" role="group" aria-label="Tipo de notação">
+              <button type="button" class="toggle-btn active" data-notation="cifra">Cifra</button>
+              <button type="button" class="toggle-btn" data-notation="solfejo">Dó-Ré-Mi</button>
+            </div>
+            <div class="note-chips" id="note-chips"></div>
+          </div>
+        </section>
+
+        <p class="status-line" id="status-line">
+          Selecione casas no braço ou escolha um acorde pronto à esquerda. Atalhos: [espaço] toca o acorde · [Esc] limpa o braço.
+        </p>
+      </div>
+    </div>
+  </div>
+
+<!-- BODY_PART_2 -->
+<script>
+/* ==========================================================================
+   Violão Virtual — Motor de acordes (Web Audio API nativa)
+   --------------------------------------------------------------------------
+   Regras de projeto:
+   1. Nenhuma biblioteca externa: a síntese das cordas é 100% Web Audio API.
+   2. O acorde NUNCA é arpejado: todas as cordas recebem o mesmo timestamp.
+   3. A afinação é a fonte da verdade: notas e frequências derivam de MIDI.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------------
+     1. Teoria musical / utilitários
+     ------------------------------------------------------------------------ */
+  const NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  // Grafia com bemóis usada apenas na nomenclatura de acordes (harmonia),
+  // mantendo sustenidos nas notas do braço (padrão de tablatura/cifra).
+  const NOTES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  const FLAT_ROOT_CLASSES = [1, 3, 6, 8, 10]; // Db, Eb, Gb, Ab, Bb
+
+  const SOLFEJO_MAP = {
+    'C': 'Dó', 'C#': 'Dó#', 'D': 'Ré', 'D#': 'Ré#', 'E': 'Mi', 'F': 'Fá',
+    'F#': 'Fá#', 'G': 'Sol', 'G#': 'Sol#', 'A': 'Lá', 'A#': 'Lá#', 'B': 'Si'
+  };
+
+  const MUTE = 'X';
+  const TOTAL_FRETS = 12;
+
+  function midiToFreq(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  function pitchClass(midi) {
+    return ((midi % 12) + 12) % 12;
+  }
+
+  function noteNameFromMidi(midi) {
+    return NOTES_SHARP[pitchClass(midi)];
+  }
+
+  function octaveFromMidi(midi) {
+    return Math.floor(midi / 12) - 1;
+  }
+
+  function noteLabelFromMidi(midi) {
+    return noteNameFromMidi(midi) + octaveFromMidi(midi);
+  }
+
+  function solfejoFromMidi(midi) {
+    return SOLFEJO_MAP[noteNameFromMidi(midi)] || noteNameFromMidi(midi);
+  }
+
+  /* ------------------------------------------------------------------------
+     2. Afinações (MIDI por corda: 1 = Mi agudo ... 6 = Mi grave)
+     ------------------------------------------------------------------------ */
+  const TUNINGS = [
+    {
+      id: 'standard',
+      label: 'Padrão (E A D G B E)',
+      openMidi: { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40 }
+    },
+    {
+      id: 'half_down',
+      label: 'Meio tom abaixo (Eb Ab Db Gb Bb Eb)',
+      openMidi: { 1: 63, 2: 58, 3: 54, 4: 49, 5: 44, 6: 39 }
+    },
+    {
+      id: 'drop_d',
+      label: 'Drop D (D A D G B E)',
+      openMidi: { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 38 }
+    },
+    {
+      id: 'open_g',
+      label: 'Open G (D B G D G D)',
+      openMidi: { 1: 62, 2: 59, 3: 55, 4: 50, 5: 43, 6: 38 }
+    }
+  ];
+
+  // Ordem visual do braço: 1ª corda (Mi agudo) em cima, 6ª (Mi grave) embaixo.
+  const STRINGS = [
+    { index: 1, label: '1ª', wound: false },
+    { index: 2, label: '2ª', wound: false },
+    { index: 3, label: '3ª', wound: false },
+    { index: 4, label: '4ª', wound: true },
+    { index: 5, label: '5ª', wound: true },
+    { index: 6, label: '6ª', wound: true }
+  ];
+
+  // Colunas do braço: X (abafada), 0 (solta) e 1..12
+  const FRET_COLUMNS = [MUTE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const MARKER_FRETS = [3, 5, 7, 9, 12];
+
+  /* ------------------------------------------------------------------------
+     3. Estado da aplicação
+     ------------------------------------------------------------------------ */
+  const state = {
+    tuningId: 'standard',
+    // Acorde inicial: C maior em afinação padrão
+    selection: { 1: 0, 2: 1, 3: 0, 4: 2, 5: 3, 6: MUTE },
+    notation: 'cifra',
+    soundEnabled: true,
+    sustain: 1,
+    volume: 0.8,
+    activeChordName: 'C',
+    activeCategoryId: 'majors'
+  };
+
+  function currentTuning() {
+    return TUNINGS.find(t => t.id === state.tuningId) || TUNINGS[0];
+  }
+
+  function openMidiOf(stringIndex) {
+    return currentTuning().openMidi[stringIndex];
+  }
+
+  function midiFor(stringIndex, fret) {
+    return openMidiOf(stringIndex) + fret;
+  }
+
+  /* ------------------------------------------------------------------------
+     4. Referências de DOM
+     ------------------------------------------------------------------------ */
+  const dom = {
+    fretboard: document.getElementById('fretboard'),
+    chordCategory: document.getElementById('chord-category'),
+    chordGrid: document.getElementById('chord-grid'),
+    tuningSelect: document.getElementById('tuning-select'),
+    tuningNote: document.getElementById('tuning-note'),
+    sustainRange: document.getElementById('sustain-range'),
+    volumeRange: document.getElementById('volume-range'),
+    soundToggle: document.getElementById('sound-toggle'),
+    chordName: document.getElementById('chord-name'),
+    chordDetail: document.getElementById('chord-detail'),
+    noteChips: document.getElementById('note-chips'),
+    statusLine: document.getElementById('status-line'),
+    btnPlay: document.getElementById('btn-play'),
+    btnClear: document.getElementById('btn-clear'),
+    btnMuteAll: document.getElementById('btn-mute-all'),
+    btnStop: document.getElementById('btn-stop'),
+    notationButtons: document.querySelectorAll('[data-notation]')
+  };
+
+  /* ------------------------------------------------------------------------
+     5. Motor de áudio: GuitarSynth (Web Audio API nativa, sem dependências)
+     ------------------------------------------------------------------------ */
+  class GuitarSynth {
+    constructor() {
+      this.ctx = null;
+      this.master = null;
+      this.compressor = null;
+      this.dryBus = null;
+      this.wetBus = null;
+      this.reverb = null;
+      this.noiseBuffer = null;
+      this.volume = 0.8;
+      this.sustain = 1;
+      this.muted = false;
+      this.activeVoices = new Set();
+    }
+
+    isSupported() {
+      return !!(window.AudioContext || window.webkitAudioContext);
+    }
+
+    /**
+     * Cria o AudioContext e a cadeia de sinal:
+     * voices -> dryBus/wetBus -> master -> compressor -> saída
+     */
+    init() {
+      if (this.ctx || !this.isSupported()) return;
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new Ctx();
+      this.ctx = ctx;
+
+      this.master = ctx.createGain();
+      this.master.gain.value = this.muted ? 0 : this.volume;
+
+      // Limitador suave: evita clipping quando as 6 cordas atacam juntas
+      this.compressor = ctx.createDynamicsCompressor();
+      this.compressor.threshold.value = -12;
+      this.compressor.knee.value = 16;
+      this.compressor.ratio.value = 4.5;
+      this.compressor.attack.value = 0.004;
+      this.compressor.release.value = 0.3;
+
+      this.master.connect(this.compressor);
+      this.compressor.connect(ctx.destination);
+
+      // Ambience: reverb por convolução com resposta ao impulso gerada em código
+      this.reverb = ctx.createConvolver();
+      this.reverb.buffer = this.createImpulseResponse(2.0, 3.1);
+
+      this.wetBus = ctx.createGain();
+      this.wetBus.gain.value = 0.16;
+      this.wetBus.connect(this.reverb);
+      this.reverb.connect(this.master);
+
+      this.dryBus = ctx.createGain();
+      this.dryBus.gain.value = 1;
+      this.dryBus.connect(this.master);
+
+      this.noiseBuffer = this.createNoiseBuffer(0.3);
+    }
+
+    /** Resposta ao impulso (sala curta) gerada proceduralmente, sem arquivos externos. */
+    createImpulseResponse(duration, decay) {
+      const rate = this.ctx.sampleRate;
+      const length = Math.max(1, Math.floor(rate * duration));
+      const impulse = this.ctx.createBuffer(2, length, rate);
+
+      for (let channel = 0; channel < 2; channel++) {
+        const data = impulse.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
+          const progress = i / length;
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - progress, decay);
+        }
+      }
+      return impulse;
+    }
+
+    /** Ruído branco reaproveitado no transiente da palhetada e no "chuck" abafado. */
+    createNoiseBuffer(duration) {
+      const rate = this.ctx.sampleRate;
+      const length = Math.max(1, Math.floor(rate * duration));
+      const buffer = this.ctx.createBuffer(1, length, rate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      return buffer;
+    }
+
+    /** Garante o contexto pronto (sempre chamado dentro de um gesto do usuário). */
+    ensureReady() {
+      this.init();
+      if (this.ctx && this.ctx.state === 'suspended') {
+        const resumeResult = this.ctx.resume();
+        if (resumeResult && typeof resumeResult.catch === 'function') {
+          resumeResult.catch(() => {});
+        }
+      }
+    }
+
+    setVolume(value) {
+      this.volume = Math.min(1, Math.max(0, value));
+      if (this.ctx && this.master) {
+        this.master.gain.setTargetAtTime(this.muted ? 0 : this.volume, this.ctx.currentTime, 0.02);
+      }
+    }
+
+    setSustain(multiplier) {
+      this.sustain = Math.min(2, Math.max(0.4, multiplier));
+    }
+
+    setMuted(flag) {
+      this.muted = !!flag;
+      if (this.ctx && this.master) {
+        this.master.gain.setTargetAtTime(this.muted ? 0 : this.volume, this.ctx.currentTime, 0.02);
+      }
+    }
+
+    /**
+     * Uma corda pinçada. Timbre = dois osciladores levemente desafinados
+     * (triangular + serra filtrada), reforço de fundamental nas cordas graves,
+     * filtro passa-baixa com envelope e transiente curto de palhetada.
+     * Envelope: ataque rápido (~6 ms) + decaimento exponencial natural.
+     * @returns {number} tempo de sustain em segundos
+     */
+    pluck(frequency, when) {
+      const ctx = this.ctx;
+
+      // Cordas graves (mais massa) ringem mais tempo e soam mais encorpadas
+      const ringBase = 7.2 / Math.pow(frequency / 82.41, 0.85);
+      const ringTime = Math.min(5.2, Math.max(1.0, ringBase)) * this.sustain;
+      const peak = Math.min(0.26, 0.15 + 0.07 * Math.min(1, 190 / frequency));
+
+      const voiceGain = ctx.createGain();
+      voiceGain.gain.setValueAtTime(0.0001, when);
+      voiceGain.gain.linearRampToValueAtTime(peak, when + 0.006);
+      voiceGain.gain.exponentialRampToValueAtTime(0.0001, when + ringTime);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.Q.value = 0.8;
+      filter.frequency.setValueAtTime(Math.min(frequency * 15, 9000), when);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(frequency * 2, 340), when + ringTime * 0.6);
+      filter.connect(voiceGain);
+
+      const oscillators = [];
+
+      const body = ctx.createOscillator();
+      body.type = 'triangle';
+      body.frequency.setValueAtTime(frequency, when);
+      body.detune.setValueAtTime(6, when);
+      const bodyGain = ctx.createGain();
+      bodyGain.gain.value = 0.85;
+      body.connect(bodyGain);
+      bodyGain.connect(filter);
+      oscillators.push(body);
+
+      const bright = ctx.createOscillator();
+      bright.type = 'sawtooth';
+      bright.frequency.setValueAtTime(frequency, when);
+      bright.detune.setValueAtTime(-7, when);
+      const brightGain = ctx.createGain();
+      brightGain.gain.value = 0.32;
+      bright.connect(brightGain);
+      brightGain.connect(filter);
+      oscillators.push(bright);
+
+      if (frequency < 165) {
+        const sub = ctx.createOscillator();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(frequency, when);
+        const subGain = ctx.createGain();
+        subGain.gain.value = 0.5;
+        sub.connect(subGain);
+        subGain.connect(filter);
+        oscillators.push(sub);
+      }
+
+      // Transiente da palhetada (ruído curtíssimo em band-pass)
+      const pick = ctx.createBufferSource();
+      pick.buffer = this.noiseBuffer;
+      pick.playbackRate.value = 0.85 + Math.random() * 0.3;
+      const pickFilter = ctx.createBiquadFilter();
+      pickFilter.type = 'bandpass';
+      pickFilter.frequency.value = Math.min(frequency * 3.2, 4200);
+      pickFilter.Q.value = 0.9;
+      const pickGain = ctx.createGain();
+      pickGain.gain.setValueAtTime(0.0001, when);
+      pickGain.gain.linearRampToValueAtTime(0.16, when + 0.004);
+      pickGain.gain.exponentialRampToValueAtTime(0.0001, when + 0.09);
+      pick.connect(pickFilter);
+      pickFilter.connect(pickGain);
+      pickGain.connect(voiceGain);
+      pick.start(when);
+      pick.stop(when + 0.12);
+
+      voiceGain.connect(this.dryBus);
+      voiceGain.connect(this.wetBus);
+
+      const voice = { oscillators: oscillators.concat([pick]), gain: voiceGain };
+      this.activeVoices.add(voice);
+
+      oscillators.forEach(osc => {
+        osc.start(when);
+        osc.stop(when + ringTime + 0.08);
+      });
+      body.onended = () => this.activeVoices.delete(voice);
+
+      return ringTime;
+    }
+
+    /** Corda abafada (X): ataque percussivo seco, sem nota definida. */
+    chuck(when, frequency) {
+      const ctx = this.ctx;
+
+      const src = ctx.createBufferSource();
+      src.buffer = this.noiseBuffer;
+      src.playbackRate.value = 0.8 + Math.random() * 0.4;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1200;
+      filter.Q.value = 1.4;
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.0001, when);
+      noiseGain.gain.linearRampToValueAtTime(0.05, when + 0.004);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, when + 0.12);
+
+      src.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.dryBus);
+      noiseGain.connect(this.wetBus);
+
+      const thud = ctx.createOscillator();
+      thud.type = 'triangle';
+      thud.frequency.setValueAtTime(Math.max(60, frequency * 0.5), when);
+      const thudGain = ctx.createGain();
+      thudGain.gain.setValueAtTime(0.0001, when);
+      thudGain.gain.linearRampToValueAtTime(0.035, when + 0.005);
+      thudGain.gain.exponentialRampToValueAtTime(0.0001, when + 0.09);
+      thud.connect(thudGain);
+      thudGain.connect(this.dryBus);
+
+      src.start(when);
+      src.stop(when + 0.16);
+      thud.start(when);
+      thud.stop(when + 0.12);
+    }
+
+    /**
+     * TOCA O ACORDE: todas as cordas no MESMO instante.
+     * Um único `startTime` é calculado e reutilizado por todas as vozes,
+     * sem qualquer offset por corda (isso seria arpejo/dedilhado).
+     */
+    playChord(voicings) {
+      if (this.muted || !voicings || voicings.length === 0) return 0;
+      this.ensureReady();
+      if (!this.ctx) return 0;
+
+      const startTime = this.ctx.currentTime + 0.035;
+      let maxRing = 0;
+
+      voicings.forEach(voice => {
+        if (voice.muted) {
+          this.chuck(startTime, voice.frequency);
+        } else {
+          maxRing = Math.max(maxRing, this.pluck(voice.frequency, startTime));
+        }
+      });
+
+      return maxRing;
+    }
+
+    /** Abafa imediatamente todas as cordas soando. */
+    stopAll() {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      this.activeVoices.forEach(voice => {
+        try {
+          voice.gain.gain.cancelScheduledValues(now);
+          voice.gain.gain.setTargetAtTime(0.0001, now, 0.02);
+        } catch (error) {
+          console.warn('Falha ao abafar voz', error);
+        }
+        voice.oscillators.forEach(node => {
+          try {
+            node.stop(now + 0.06);
+          } catch (error) {
+            /* o nó já terminou naturalmente */
+          }
+        });
+      });
+      this.activeVoices.clear();
+    }
+  }
+
+  const synth = new GuitarSynth();
+
+  /* ------------------------------------------------------------------------
+     6. Dicionário de acordes
+     O desenho é escrito na ordem 6ª, 5ª, 4ª, 3ª, 2ª, 1ª (grave -> agudo),
+     exatamente como se lê um diagrama de acorde. 'X' = corda abafada.
+     ------------------------------------------------------------------------ */
+  const CHORD_CATEGORIES = [
+    {
+      id: 'majors',
+      label: 'Maiores',
+      chords: [
+        { name: 'C', fingering: [MUTE, 3, 2, 0, 1, 0] },
+        { name: 'D', fingering: [MUTE, MUTE, 0, 2, 3, 2] },
+        { name: 'E', fingering: [0, 2, 2, 1, 0, 0] },
+        { name: 'F', fingering: [1, 3, 3, 2, 1, 1] },
+        { name: 'G', fingering: [3, 2, 0, 0, 0, 3] },
+        { name: 'A', fingering: [MUTE, 0, 2, 2, 2, 0] },
+        { name: 'B', fingering: [MUTE, 2, 4, 4, 4, 2] },
+        { name: 'Bb', fingering: [MUTE, 1, 3, 3, 3, 1] }
+      ]
+    },
+    {
+      id: 'minors',
+      label: 'Menores',
+      chords: [
+        { name: 'Am', fingering: [MUTE, 0, 2, 2, 1, 0] },
+        { name: 'Bm', fingering: [MUTE, 2, 4, 4, 3, 2] },
+        { name: 'Cm', fingering: [MUTE, 3, 5, 5, 4, 3] },
+        { name: 'Dm', fingering: [MUTE, MUTE, 0, 2, 3, 1] },
+        { name: 'Em', fingering: [0, 2, 2, 0, 0, 0] },
+        { name: 'Fm', fingering: [1, 3, 3, 1, 1, 1] },
+        { name: 'Gm', fingering: [3, 5, 5, 3, 3, 3] },
+        { name: 'Am7/G', fingering: [3, 0, 2, 0, 1, 0] }
+      ]
+    },
+    {
+      id: 'sevenths',
+      label: 'Com sétima (7)',
+      chords: [
+        { name: 'C7', fingering: [MUTE, 3, 2, 3, 1, 0] },
+        { name: 'D7', fingering: [MUTE, MUTE, 0, 2, 1, 2] },
+        { name: 'E7', fingering: [0, 2, 0, 1, 0, 0] },
+        { name: 'F7', fingering: [1, 3, 1, 2, 1, 1] },
+        { name: 'G7', fingering: [3, 2, 0, 0, 0, 1] },
+        { name: 'A7', fingering: [MUTE, 0, 2, 0, 2, 0] },
+        { name: 'B7', fingering: [MUTE, 2, 1, 2, 0, 2] },
+        { name: 'C9', fingering: [MUTE, 3, 2, 3, 3, MUTE] }
+      ]
+    },
+    {
+      id: 'majors7',
+      label: 'Sétimas maiores (7M)',
+      chords: [
+        { name: 'C7M', fingering: [MUTE, 3, 2, 0, 0, 0] },
+        { name: 'D7M', fingering: [MUTE, MUTE, 0, 2, 2, 2] },
+        { name: 'F7M', fingering: [MUTE, MUTE, 3, 2, 1, 0] },
+        { name: 'G7M', fingering: [3, 2, 0, 0, 0, 2] },
+        { name: 'A7M', fingering: [MUTE, 0, 2, 1, 2, 0] }
+      ]
+    },
+    {
+      id: 'minors7',
+      label: 'Menores com 7 (m7)',
+      chords: [
+        { name: 'Am7', fingering: [MUTE, 0, 2, 0, 1, 0] },
+        { name: 'Bm7', fingering: [MUTE, 2, 4, 2, 3, 2] },
+        { name: 'Dm7', fingering: [MUTE, MUTE, 0, 2, 1, 1] },
+        { name: 'Em7', fingering: [0, 2, 0, 0, 0, 0] },
+        { name: 'Bm7b5', fingering: [MUTE, 2, 3, 2, 3, MUTE] }
+      ]
+    },
+    {
+      id: 'suspended',
+      label: 'Suspensos & add9',
+      chords: [
+        { name: 'Asus4', fingering: [MUTE, 0, 2, 2, 3, 0] },
+        { name: 'Dsus4', fingering: [MUTE, MUTE, 0, 2, 3, 3] },
+        { name: 'Esus4', fingering: [0, 2, 2, 2, 0, 0] },
+        { name: 'Asus2', fingering: [MUTE, 0, 2, 2, 0, 0] },
+        { name: 'Dsus2', fingering: [MUTE, MUTE, 0, 2, 3, 0] },
+        { name: 'Cadd9', fingering: [MUTE, 3, 2, 0, 3, 3] }
+      ]
+    },
+    {
+      id: 'power',
+      label: 'Power chords (5)',
+      chords: [
+        { name: 'E5', fingering: [0, 2, 2, MUTE, MUTE, MUTE] },
+        { name: 'A5', fingering: [MUTE, 0, 2, 2, MUTE, MUTE] },
+        { name: 'D5', fingering: [MUTE, MUTE, 0, 2, 3, MUTE] },
+        { name: 'G5', fingering: [3, 5, 5, MUTE, MUTE, MUTE] },
+        { name: 'C5', fingering: [MUTE, 3, 5, 5, MUTE, MUTE] }
+      ]
+    },
+    {
+      id: 'inversions',
+      label: 'Inversões (baixo alternativo)',
+      chords: [
+        { name: 'C/G', fingering: [3, 3, 2, 0, 1, 0] },
+        { name: 'F/A', fingering: [MUTE, 0, 3, 2, 1, 1] },
+        { name: 'G/B', fingering: [MUTE, 2, 0, 0, 0, 3] },
+        { name: 'D/F#', fingering: [2, MUTE, 0, 2, 3, 2] }
+      ]
+    },
+    {
+      id: 'special',
+      label: 'Diminutos, aumentados & 6',
+      chords: [
+        { name: 'Bdim', fingering: [MUTE, 2, 3, 4, 3, MUTE] },
+        { name: 'Cdim', fingering: [MUTE, 3, 4, 5, 4, MUTE] },
+        { name: 'Caug', fingering: [MUTE, 3, 2, 1, 1, 0] },
+        { name: 'C6', fingering: [MUTE, 3, 5, 2, 1, 0] }
+      ]
+    }
+  ];
+
+  /* ------------------------------------------------------------------------
+     7. Detecção automática do nome do acorde
+     ------------------------------------------------------------------------ */
+  const CHORD_FORMULAS = [
+    { suffix: '', intervals: [0, 4, 7] },
+    { suffix: 'm', intervals: [0, 3, 7] },
+    { suffix: '7', intervals: [0, 4, 7, 10] },
+    { suffix: 'm7', intervals: [0, 3, 7, 10] },
+    { suffix: '7M', intervals: [0, 4, 7, 11] },
+    { suffix: 'm7M', intervals: [0, 3, 7, 11] },
+    { suffix: '6', intervals: [0, 4, 7, 9] },
+    { suffix: 'm6', intervals: [0, 3, 7, 9] },
+    { suffix: 'm7b5', intervals: [0, 3, 6, 10] },
+    { suffix: 'dim', intervals: [0, 3, 6] },
+    { suffix: 'dim7', intervals: [0, 3, 6, 9] },
+    { suffix: 'aug', intervals: [0, 4, 8] },
+    { suffix: 'sus4', intervals: [0, 5, 7] },
+    { suffix: 'sus2', intervals: [0, 2, 7] },
+    { suffix: '5', intervals: [0, 7] },
+    { suffix: 'add9', intervals: [0, 2, 4, 7] },
+    { suffix: '9', intervals: [0, 2, 4, 7, 10] },
+    { suffix: 'm9', intervals: [0, 2, 3, 7, 10] },
+    { suffix: '7M(9)', intervals: [0, 2, 4, 7, 11] },
+    { suffix: '7sus4', intervals: [0, 5, 7, 10] },
+    { suffix: '7(13)', intervals: [0, 4, 7, 9, 10] }
+  ];
+
+  /**
+   * Descobre o nome do acorde a partir das notas que estão soando.
+   * Compara o conjunto de intervalos com as fórmulas conhecidas (casando exato
+   * primeiro e tolerando a 5ª omitida depois) e prioriza a fundamental quando
+   * ela está no baixo; caso contrário devolve a nota de baixo (acorde com barra).
+   */
+  function detectChord(voicings) {
+    const sounding = voicings
+      .filter(voice => !voice.muted)
+      .sort((a, b) => a.frequency - b.frequency);
+
+    if (sounding.length === 0) {
+      return { name: 'Silêncio', detail: 'Todas as cordas estão abafadas (X)' };
+    }
+
+    const classes = Array.from(new Set(sounding.map(voice => pitchClass(voice.midi))));
+    const bass = sounding[0];
+
+    if (classes.length === 1) {
+      return {
+        name: noteLabelFromMidi(sounding[0].midi),
+        detail: 'Nota única soando em ' + sounding.length + ' corda(s)'
+      };
+    }
+
+    const matches = [];
+    for (let root = 0; root < 12; root++) {
+      const intervals = new Set(classes.map(pc => (pc - root + 12) % 12));
+      const sorted = Array.from(intervals).sort((a, b) => a - b);
+
+      CHORD_FORMULAS.forEach((formula, order) => {
+        const exact = sorted.length === formula.intervals.length &&
+          formula.intervals.every(interval => intervals.has(interval));
+        const tolerated = !exact && sorted.every(interval => formula.intervals.indexOf(interval) !== -1);
+        if (exact || tolerated) {
+          matches.push({ root: root, formula: formula, order: order, exact: exact });
+        }
+      });
+    }
+
+    if (matches.length === 0) {
+      return {
+        name: 'Acorde personalizado',
+        detail: classes.length + ' notas em ' + sounding.length + ' cordas'
+      };
+    }
+
+    matches.sort((a, b) => {
+      if (a.exact !== b.exact) return a.exact ? -1 : 1;
+      if (!a.exact) {
+        const sizeDiff = a.formula.intervals.length - b.formula.intervals.length;
+        if (sizeDiff !== 0) return sizeDiff;
+      }
+      const bassClass = pitchClass(bass.midi);
+      const aBass = a.root === bassClass ? 0 : 1;
+      const bBass = b.root === bassClass ? 0 : 1;
+      if (aBass !== bBass) return aBass - bBass;
+      return a.order - b.order;
+    });
+
+    const best = matches[0];
+    // Fundamentais de tonalidades com bemóis são grafadas com bemol (Bb em vez de A#)
+    const spelling = FLAT_ROOT_CLASSES.indexOf(best.root) !== -1 ? NOTES_FLAT : NOTES_SHARP;
+    const rootName = spelling[best.root];
+    const bassName = spelling[pitchClass(bass.midi)];
+    const isSlash = best.root !== pitchClass(bass.midi);
+    const rootSolfejo = SOLFEJO_MAP[rootName] || rootName;
+    const bassSolfejo = SOLFEJO_MAP[bassName] || bassName;
+
+    return {
+      name: rootName + best.formula.suffix + (isSlash ? '/' + bassName : ''),
+      detail: rootSolfejo + (isSlash ? ' com baixo em ' + bassSolfejo : '') +
+        ' · ' + sounding.length + ' cordas soando'
+    };
+  }
+
+  /* ------------------------------------------------------------------------
+     8. Montagem das vozes (sempre a partir da afinação atual)
+     ------------------------------------------------------------------------ */
+  function buildVoicings() {
+    return STRINGS.map(str => {
+      const selected = state.selection[str.index];
+      const openMidi = openMidiOf(str.index);
+
+      if (selected === MUTE) {
+        return {
+          string: str.index,
+          stringLabel: str.label,
+          muted: true,
+          fret: MUTE,
+          midi: openMidi,
+          frequency: midiToFreq(openMidi),
+          noteLabel: MUTE,
+          solfejo: 'abafada'
+        };
+      }
+
+      const fret = Number(selected);
+      const midi = midiFor(str.index, fret);
+
+      return {
+        string: str.index,
+        stringLabel: str.label,
+        muted: false,
+        fret: fret,
+        midi: midi,
+        frequency: midiToFreq(midi),
+        noteLabel: noteLabelFromMidi(midi),
+        solfejo: solfejoFromMidi(midi)
+      };
+    });
+  }
+
+  /* ------------------------------------------------------------------------
+     9. Feedback visual e linha de status
+     ------------------------------------------------------------------------ */
+  function setStatus(message, tone) {
+    dom.statusLine.textContent = message;
+    dom.statusLine.className = 'status-line' + (tone ? ' ' + tone : '');
+  }
+
+  function highlightPlaying(voicings) {
+    voicings.forEach(voice => {
+      const cell = dom.fretboard.querySelector(
+        '.fret-option[data-string="' + voice.string + '"][data-fret="' + voice.fret + '"]'
+      );
+      if (cell) {
+        cell.classList.remove('ringing');
+        void cell.offsetWidth; // reinicia a animação da corda vibrando
+        cell.classList.add('ringing');
+      }
+
+      const chip = dom.noteChips.querySelector('.note-chip[data-string="' + voice.string + '"]');
+      if (chip) chip.classList.add('is-ringing');
+    });
+
+    window.setTimeout(() => {
+      dom.noteChips.querySelectorAll('.note-chip.is-ringing').forEach(chip => {
+        chip.classList.remove('is-ringing');
+      });
+      dom.fretboard.querySelectorAll('.fret-option.ringing').forEach(cell => {
+        cell.classList.remove('ringing');
+      });
+    }, 600);
+  }
+
+  /* ------------------------------------------------------------------------
+     10. Execução do acorde (botão principal / atalhos)
+     ------------------------------------------------------------------------ */
+  function playChord() {
+    const voicings = buildVoicings();
+    const sounding = voicings.filter(voice => !voice.muted);
+
+    if (!state.soundEnabled) {
+      setStatus('Som desligado: clique no ícone 🔊 no topo para ouvir o acorde.', 'warning');
+      return;
+    }
+
+    if (sounding.length === 0) {
+      synth.stopAll();
+      highlightPlaying(voicings);
+      setStatus('Todas as cordas estão abafadas (X) — não há nota para soar. Libere ao menos uma corda.', 'warning');
+      return;
+    }
+
+    const ringTime = synth.playChord(voicings);
+
+    dom.btnPlay.classList.remove('flash');
+    void dom.btnPlay.offsetWidth;
+    dom.btnPlay.classList.add('flash');
+
+    highlightPlaying(voicings);
+
+    const notes = sounding.map(voice => voice.noteLabel).join(' · ');
+    setStatus(
+      'Acorde disparado: ' + sounding.length + ' corda(s) no mesmo instante, sem arpejo → ' + notes +
+      ' (sustain ≈ ' + ringTime.toFixed(1) + 's)',
+      'success'
+    );
+  }
+
+  function stopAllSound() {
+    synth.stopAll();
+    setStatus('Cordas abafadas: o som foi interrompido.');
+  }
+
+  /* ------------------------------------------------------------------------
+     11. Renderização do braço
+     ------------------------------------------------------------------------ */
+  function fretLabelFor(stringIndex, column) {
+    if (column === MUTE) return MUTE;
+    return noteLabelFromMidi(midiFor(stringIndex, Number(column)));
+  }
+
+  function fretTitleFor(stringIndex, column) {
+    const str = STRINGS.find(item => item.index === stringIndex);
+    if (column === MUTE) {
+      return str.label + ' corda · abafada (sem nota definida)';
+    }
+    const fret = Number(column);
+    return str.label + ' corda · ' +
+      (fret === 0 ? 'corda solta' : 'casa ' + fret) +
+      ' · ' + fretLabelFor(stringIndex, column) + ' (' + solfejoFromMidi(midiFor(stringIndex, fret)) + ')';
+  }
+
+  /** Cria a grade completa: cabeçalho de casas + 6 cordas com colunas X, 0 e 1..12 */
+  function renderFretboard() {
+    dom.fretboard.innerHTML = '';
+
+    // Linha de cabeçalho com os números das casas
+    const headerRow = document.createElement('div');
+    headerRow.className = 'fret-row is-header';
+
+    const corner = document.createElement('div');
+    corner.className = 'string-label-cell';
+    corner.innerHTML = '<span class="s-label">Cordas</span><span class="s-note">casas →</span>';
+    headerRow.appendChild(corner);
+
+    FRET_COLUMNS.forEach((column, position) => {
+      const cell = document.createElement('div');
+      cell.className = 'fret-cell';
+      if (position === FRET_COLUMNS.length - 1) cell.classList.add('is-last');
+      if (column === MUTE) {
+        cell.classList.add('col-mute');
+        cell.textContent = MUTE;
+      } else if (column === 0) {
+        cell.classList.add('col-open');
+        cell.textContent = '0';
+      } else {
+        cell.textContent = String(column);
+        if (MARKER_FRETS.indexOf(column) !== -1) cell.classList.add('is-marker');
+      }
+      headerRow.appendChild(cell);
+    });
+
+    dom.fretboard.appendChild(headerRow);
+
+    // Linhas das seis cordas (1ª no topo → 6ª embaixo)
+    STRINGS.forEach(str => {
+      const row = document.createElement('div');
+      row.className = 'fret-row string-' + str.index;
+
+      const label = document.createElement('div');
+      label.className = 'string-label-cell';
+      const openLabel = noteLabelFromMidi(openMidiOf(str.index));
+      label.innerHTML = '<span class="s-label">' + str.label + '</span>' +
+        '<span class="s-note">' + openLabel + '</span>';
+      label.title = str.label + ' corda · nota solta atual: ' + openLabel;
+      row.appendChild(label);
+
+      FRET_COLUMNS.forEach((column, position) => {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'fret-cell fret-option';
+        if (str.wound) cell.classList.add('wound');
+        if (position === FRET_COLUMNS.length - 1) cell.classList.add('is-last');
+        if (column === MUTE) cell.classList.add('col-mute');
+        if (column === 0) cell.classList.add('col-open');
+        cell.dataset.string = String(str.index);
+        cell.dataset.fret = String(column);
+
+        // Marcadores perolados do braço (casas 3, 5, 7, 9 e duplo na 12)
+        if (MARKER_FRETS.indexOf(column) !== -1) {
+          if (column === 12 && (str.index === 2 || str.index === 4)) {
+            const dot = document.createElement('span');
+            dot.className = 'inlay-dot ' + (str.index === 2 ? 'inlay-top' : 'inlay-bottom');
+            cell.appendChild(dot);
+          } else if (column !== 12 && str.index === 3) {
+            const dot = document.createElement('span');
+            dot.className = 'inlay-dot inlay-center';
+            cell.appendChild(dot);
+          }
+        }
+
+        const note = document.createElement('span');
+        note.className = 'fret-note';
+        note.textContent = fretLabelFor(str.index, column);
+        cell.appendChild(note);
+
+        row.appendChild(cell);
+      });
+
+      dom.fretboard.appendChild(row);
+    });
+
+    paintSelection();
+  }
+
+  /** Aplica os estados visuais das células conforme a seleção atual */
+  function paintSelection() {
+    dom.fretboard.querySelectorAll('.fret-option').forEach(cell => {
+      const stringIndex = Number(cell.dataset.string);
+      const column = cell.dataset.fret;
+      const isSelected = String(state.selection[stringIndex]) === column;
+
+      cell.classList.toggle('selected', isSelected);
+      cell.classList.toggle('is-mute', isSelected && column === MUTE);
+      cell.classList.toggle('is-open', isSelected && column === '0');
+      cell.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+
+      const note = cell.querySelector('.fret-note');
+      if (note) note.textContent = fretLabelFor(stringIndex, column);
+
+      const title = fretTitleFor(stringIndex, column);
+      cell.title = title;
+      cell.setAttribute('aria-label', title);
+    });
+  }
+
+
+  /* ------------------------------------------------------------------------
+     12. Painel de acordes rápidos
+     ------------------------------------------------------------------------ */
+  function renderCategoryOptions() {
+    dom.chordCategory.innerHTML = '';
+    CHORD_CATEGORIES.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category.id;
+      option.textContent = category.label + ' (' + category.chords.length + ')';
+      dom.chordCategory.appendChild(option);
+    });
+    dom.chordCategory.value = state.activeCategoryId;
+  }
+
+  function renderChordGrid() {
+    const category = CHORD_CATEGORIES.find(item => item.id === state.activeCategoryId) || CHORD_CATEGORIES[0];
+    dom.chordGrid.innerHTML = '';
+
+    category.chords.forEach(chord => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'chord-btn';
+      button.textContent = chord.name;
+      button.dataset.chordName = chord.name;
+      button.title = 'Carregar e tocar ' + chord.name;
+      if (chord.name === state.activeChordName) button.classList.add('active');
+      dom.chordGrid.appendChild(button);
+    });
+  }
+
+  function markActiveChord() {
+    dom.chordGrid.querySelectorAll('.chord-btn').forEach(button => {
+      button.classList.toggle('active', button.dataset.chordName === state.activeChordName);
+    });
+  }
+
+  /* ------------------------------------------------------------------------
+     13. Lista de notas e nome do acorde
+     ------------------------------------------------------------------------ */
+  function renderNoteChips(voicings) {
+    dom.noteChips.innerHTML = '';
+    const ordered = voicings.slice().reverse(); // 6ª corda primeiro (leitura de tablatura)
+
+    ordered.forEach(voice => {
+      const chip = document.createElement('div');
+      chip.className = 'note-chip';
+      chip.dataset.string = String(voice.string);
+      if (voice.muted) chip.classList.add('is-muted');
+
+      const stringLabel = document.createElement('span');
+      stringLabel.className = 'chip-string';
+      stringLabel.textContent = voice.stringLabel;
+
+      const noteLabel = document.createElement('span');
+      noteLabel.className = 'chip-note';
+      noteLabel.textContent = voice.muted ? MUTE : voice.noteLabel;
+
+      const detail = document.createElement('span');
+      detail.className = 'chip-solfejo';
+      detail.textContent = voice.muted ? 'abafada' : voice.solfejo;
+
+      chip.appendChild(stringLabel);
+      chip.appendChild(noteLabel);
+      chip.appendChild(detail);
+      chip.title = fretTitleFor(voice.string, voice.fret);
+      dom.noteChips.appendChild(chip);
+    });
+  }
+
+  function updateChordInfo() {
+    const voicings = buildVoicings();
+    const detected = detectChord(voicings);
+
+    dom.chordName.textContent = detected.name;
+    dom.chordDetail.textContent = detected.detail;
+
+    if (state.notation === 'cifra') {
+      renderNoteChips(voicings);
+    } else {
+      renderNoteChips(voicings);
+      dom.noteChips.querySelectorAll('.note-chip').forEach(chip => {
+        const voice = voicings.find(item => String(item.string) === chip.dataset.string);
+        if (voice && !voice.muted) {
+          chip.querySelector('.chip-note').textContent = voice.solfejo;
+          chip.querySelector('.chip-solfejo').textContent = voice.noteLabel;
+        }
+      });
+    }
+  }
+  /* ------------------------------------------------------------------------
+     14. Ações do usuário
+     ------------------------------------------------------------------------ */
+  function setFret(stringIndex, column) {
+    state.selection[stringIndex] = column;
+    state.activeChordName = null;
+
+    paintSelection();
+    updateChordInfo();
+    markActiveChord();
+
+    if (!state.soundEnabled) return;
+
+    // Prévia da corda recém-selecionada (mesmo motor usado no acorde)
+    const voicing = buildVoicings().find(voice => voice.string === stringIndex);
+    if (voicing) {
+      synth.ensureReady();
+      synth.playChord([voicing]);
+      highlightPlaying([voicing]);
+    }
+  }
+
+  function applyPreset(chord) {
+    // fingering: [6ª, 5ª, 4ª, 3ª, 2ª, 1ª] -> indexado por corda
+    state.selection = {
+      1: chord.fingering[5],
+      2: chord.fingering[4],
+      3: chord.fingering[3],
+      4: chord.fingering[2],
+      5: chord.fingering[1],
+      6: chord.fingering[0]
+    };
+    state.activeChordName = chord.name;
+
+    paintSelection();
+    updateChordInfo();
+    markActiveChord();
+
+    if (state.soundEnabled) {
+      playChord();
+    } else {
+      setStatus('Acorde ' + chord.name + ' carregado no braço (som desligado).', 'warning');
+    }
+  }
+
+  function clearAllStrings() {
+    STRINGS.forEach(str => { state.selection[str.index] = 0; });
+    state.activeChordName = null;
+    paintSelection();
+    updateChordInfo();
+    markActiveChord();
+    setStatus('Braço limpo: as seis cordas estão soltas (0). Clique em "Tocar Acorde" para ouvir.');
+  }
+
+  function muteAllStrings() {
+    STRINGS.forEach(str => { state.selection[str.index] = MUTE; });
+    state.activeChordName = null;
+    paintSelection();
+    updateChordInfo();
+    markActiveChord();
+    setStatus('Todas as cordas foram abafadas (X). Selecione casas para montar um novo acorde.');
+  }
+
+  function changeTuning(tuningId) {
+    state.tuningId = tuningId;
+    const tuning = currentTuning();
+
+    renderFretboard();
+    updateChordInfo();
+    setStatus('Afinação alterada para ' + tuning.label + '. Os nomes das notas foram recalculados.');
+
+    dom.tuningNote.textContent = tuning.id === 'standard'
+      ? 'Desenhos de acorde consideram a afinação padrão (E A D G B E).'
+      : 'Afinação ' + tuning.label + ': os desenhos de acorde prontos soam em outras tonalidades — o nome detectado sempre corresponde à afinação atual.';
+  }
+
+  function setNotation(mode) {
+    state.notation = mode;
+    dom.notationButtons.forEach(button => {
+      button.classList.toggle('active', button.dataset.notation === mode);
+    });
+    updateChordInfo();
+  }
+
+  function toggleSound() {
+    state.soundEnabled = !state.soundEnabled;
+    synth.setMuted(!state.soundEnabled);
+    synth.ensureReady();
+
+    dom.soundToggle.classList.toggle('active', state.soundEnabled);
+    dom.soundToggle.textContent = state.soundEnabled ? '🔊' : '🔇';
+
+    if (!state.soundEnabled) {
+      synth.stopAll();
+      setStatus('Som desligado. Os acordes continuam sendo montados no braço.', 'warning');
+    } else {
+      setStatus('Som ligado: pronto para tocar acordes.');
+    }
+  }
+  /* ------------------------------------------------------------------------
+     15. Eventos
+     ------------------------------------------------------------------------ */
+  function setupEventListeners() {
+    // Clique no braço (delegação: qualquer célula de casa)
+    dom.fretboard.addEventListener('click', event => {
+      const cell = event.target.closest('.fret-option');
+      if (!cell) return;
+      const stringIndex = Number(cell.dataset.string);
+      const column = cell.dataset.fret;
+      setFret(stringIndex, isNaN(Number(column)) ? column : Number(column));
+    });
+
+    // Acordes prontos
+    dom.chordGrid.addEventListener('click', event => {
+      const button = event.target.closest('.chord-btn');
+      if (!button) return;
+      const category = CHORD_CATEGORIES.find(item => item.id === state.activeCategoryId);
+      const chord = category && category.chords.find(item => item.name === button.dataset.chordName);
+      if (chord) applyPreset(chord);
+    });
+
+    dom.chordCategory.addEventListener('change', event => {
+      state.activeCategoryId = event.target.value;
+      renderChordGrid();
+      markActiveChord();
+    });
+
+    // Afinação
+    dom.tuningSelect.addEventListener('change', event => changeTuning(event.target.value));
+
+    // Volume e sustain
+    dom.volumeRange.addEventListener('input', event => {
+      const percent = Number(event.target.value);
+      state.volume = percent / 100;
+      synth.setVolume(state.volume);
+    });
+
+    dom.sustainRange.addEventListener('input', event => {
+      const percent = Number(event.target.value);
+      state.sustain = percent / 100;
+      synth.setSustain(state.sustain);
+    });
+
+    // Som ligado/desligado
+    dom.soundToggle.addEventListener('click', toggleSound);
+
+    // Botão principal: TOCAR ACORDE (disparo simultâneo)
+    dom.btnPlay.addEventListener('click', event => {
+      event.preventDefault();
+      playChord();
+    });
+
+    // Botões auxiliares do braço
+    dom.btnClear.addEventListener('click', clearAllStrings);
+    dom.btnMuteAll.addEventListener('click', muteAllStrings);
+    dom.btnStop.addEventListener('click', stopAllSound);
+
+    // Notação (Cifra / Dó-Ré-Mi)
+    dom.notationButtons.forEach(button => {
+      button.addEventListener('click', () => setNotation(button.dataset.notation));
+    });
+
+    // Atalhos de teclado: [espaço] toca o acorde, [Esc] limpa o braço
+    document.addEventListener('keydown', event => {
+      const tagName = (event.target && event.target.tagName ? event.target.tagName : '').toUpperCase();
+      if (tagName === 'SELECT' || tagName === 'INPUT') return;
+
+      if (event.code === 'Space' || event.key === ' ') {
+        event.preventDefault();
+        playChord();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        clearAllStrings();
+      }
+    });
+
+    // Desbloqueio do áudio: o AudioContext só nasce dentro de um gesto do usuário
+    const unlock = () => synth.ensureReady();
+    document.addEventListener('pointerdown', unlock, { once: true });
+    document.addEventListener('touchstart', unlock, { once: true });
+  }
+
+  /* ------------------------------------------------------------------------
+     16. Inicialização
+     ------------------------------------------------------------------------ */
+  function init() {
+    // Afinações disponíveis
+    dom.tuningSelect.innerHTML = '';
+    TUNINGS.forEach(tuning => {
+      const option = document.createElement('option');
+      option.value = tuning.id;
+      option.textContent = tuning.label;
+      dom.tuningSelect.appendChild(option);
+    });
+    dom.tuningSelect.value = state.tuningId;
+
+    renderCategoryOptions();
+    renderChordGrid();
+    renderFretboard();
+    updateChordInfo();
+
+    synth.setVolume(state.volume);
+    synth.setSustain(state.sustain);
+
+    setupEventListeners();
+
+    if (!synth.isSupported()) {
+      setStatus('Seu navegador não suporta a Web Audio API — a interface funciona, mas sem som.', 'warning');
+      state.soundEnabled = false;
+      dom.soundToggle.classList.remove('active');
+      dom.soundToggle.textContent = '🔇';
+    } else {
+      setStatus('Braço pronto com o acorde C maior. Clique em "Tocar Acorde" ou pressione [espaço] — as 6 cordas soam no mesmo instante.');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
